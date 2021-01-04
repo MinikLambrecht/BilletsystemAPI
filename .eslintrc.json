@@ -19,29 +19,22 @@
     "eol-last": ["error", "never"],
     "linebreak-style": ["error", "unix"],
     "quotes": ["error", "single"],
-    "curly": ["error", "multi-line"],
-    "brace-style": [
-      "error",
-      "allman",
+    "curly": ["error", "all"],
+    "brace-style": ["error", "allman",
       {
-        "allowSingleLine": false
+        "allowSingleLine": true
       }
     ],
-    "object-curly-newline": [
-      "error",
+    "object-curly-newline": ["error",
       {
         "ObjectExpression": "always",
-        "ObjectPattern": {
-          "multiline": true
-        },
+        "ObjectPattern": { "multiline": true },
         "ImportDeclaration": "never",
         "ExportDeclaration": "never"
       }
     ],
     "semi": ["error", "always"],
     "no-console": 1,
-    "comma-dangle": [0],
-    "arrow-parens": [0],
     "object-curly-spacing": ["warn", "always"],
     "array-bracket-spacing": ["warn", "always"],
     "import/prefer-default-export": [0]

@@ -20,7 +20,7 @@ const options = {
     console: {
         level: 'debug',
         handleExceptions: true,
-        json: false,
+        json: true,
         colorize: true,
     },
 };
@@ -32,7 +32,7 @@ const logger = new createLogger({
         timestamp({
             format: DateString,
         }),
-        prettyPrint()
+        prettyPrint(),
     ),
     transports: [
         new _transports.Console(options.console),
