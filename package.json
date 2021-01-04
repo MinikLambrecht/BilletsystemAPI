@@ -1,0 +1,51 @@
+{
+  "name": "billetsystemapi",
+  "version": "1.0.0",
+  "repository": "https://github.com/MinikLambrecht/BilletsystemAPI.git",
+  "main": "App.js",
+  "author": "Minik Gaarde Lambrecht",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "prestart": "babel ./Src --out-dir Build",
+    "start": "node ./Build/Bin/www",
+    "startdev": "nodemon --exec babel-node ./Src/Bin/www.js",
+    "lint": "./node_modules/.bin/eslint ./Src",
+    "pretty": "prettier --write '**/*.{js,json}' '!node_modules/**'",
+    "postpretty": "yarn lint --fix",
+    "test": "nyc --reporter=html --reporter=text --reporter=lcov mocha -r @babel/register"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "fast-date-format": "^2.2.4",
+    "helmet": "^4.3.1",
+    "http-errors": "^1.8.0",
+    "morgan": "^1.10.0",
+    "mysql2": "^2.2.5",
+    "sequelize": "^6.3.5",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.10",
+    "@babel/node": "^7.12.10",
+    "@babel/plugin-transform-runtime": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@babel/register": "^7.12.10",
+    "@babel/runtime": "^7.12.5",
+    "chai": "^4.2.0",
+    "eslint": "^7.17.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "mocha": "^8.2.1",
+    "nodemon": "^2.0.6",
+    "nyc": "^15.1.0",
+    "prettier": "^2.2.1",
+    "sinon-chai": "^3.5.0",
+    "supertest": "^6.0.1"
+  }
+}
