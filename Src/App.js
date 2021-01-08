@@ -1,57 +1,68 @@
+/* eslint-disable max-len */
 // Import dependencies
-import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
 
-// Import models & controllers
-
+// Import the logger & possibly needed envs
 import logger from './Config/Winston';
+import { AppPort } from './Config/Settings';
 
+// Initialize express & fetch the routes
 const app = express();
+const routes = require('./Routes');
 
+// Setup CORS with some minor tweaks
 const corsOptions = {
-    origin: 'http://localhost:8081',
+    origin: `localhost:${AppPort || 8080}`,
+    methods: 'GET, PUT, POST, DELETE',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
 };
-
-// Sync sequelize
-// db.sequelize.sync();
 
 // Enable CORS for all requests
 app.use(cors(corsOptions));
 
-// Add Helmet to secure the API
-app.use(helmet());
+/* Add Helmet to secure the API with 11 connect style middlewares
+ *
+ * Sets the Content-Secutiy-Policy Header (Helps mitigate cross-site scripting attacks)
+ * Sets the Expect-CT Header (Helps mitigate misissued SSL Certificates)
+ * Sets the Referrer-Policy Header (Controls what information is set in the Referer header)
+ * Sets the Strict-Transport-security Header (prefer HTTPS over HTTP)
+ * Sets the X-Content-Type-Options to nosniff (mitigates MIME type sniffing)
+ * Sets the X-DNS-Prefetch-Control (Helps controlling DNS Prefetching)
+ * Sets the X-Download-Options (Mitigates executiong of HTML on the sites context)
+ * Sets the X-Frame-Options (Mitigates clickjacking attacks)
+ * Sets the X-Permitted-Cross-Domain-Policies (States your domains policy for loading cross-domain content)
+ * Removes the X-Powered-By header (Some browsers has this on by default) *DISABLED*
+ * Sets the X-XSS-Protection header to 0
+ */
+app.use(helmet(helmet.hidePoweredBy()));
 
 // Parse JSON Bodies into JS Objects
 app.use(bodyParser.json());
 
 // Parse requests of content-type - application/x-www-form-urlencoded
-app.use(
-    bodyParser.urlencoded({
-        extended: true,
-    })
-);
+app.use(bodyParser.urlencoded({
+    extended: true,
+}));
 
-// Add Morgan to log HTTP requests
-app.use(
-    morgan('combined', {
-        stream: logger.stream.write,
-    })
-);
+// Setup Morgan to Log the web server requests with Winston
+app.use(morgan('combined', {
+    stream: logger.stream.write,
+}));
 
-// Setup the logging format
+// Customize the logging format
 app.use((err, req, _res, next) =>
 {
-    logger.error(
-        `${req.method} - ${err.message} - ${req.originalUrl} - ${req.ip}`
-    );
+    logger.error(`${req.method} - ${err.message} - ${req.originalUrl} - ${req.ip}`);
     next(err);
 });
 
-app.use(cookieParser());
-app.use('/api/v1', app);
+// Set the base url & define the routes
+app.set('base', '/billetsystem/api/v1');
+app.use('/billetsystem/api/v1', routes);
 
 export default app;

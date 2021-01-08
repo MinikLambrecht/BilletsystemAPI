@@ -6,6 +6,7 @@
     "mocha": true
   },
   "extends": ["airbnb-base"],
+  "ignorePatterns": ["**/Models/*.js", "**/Migrations/*.js", "**/Seeders/*.js"],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"

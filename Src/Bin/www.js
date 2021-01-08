@@ -4,9 +4,9 @@
  * Module dependencies.
  */
 
-import debug from 'debug';
 import http from 'http';
 import app from '../App';
+import logger from '../Config/Winston';
 
 require('dotenv').config();
 
@@ -49,7 +49,7 @@ const onError = (error) =>
 {
     if (error.syscall !== 'listen')
     {
-        throw error;
+        logger.error(error);
     }
 
     const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
@@ -58,17 +58,18 @@ const onError = (error) =>
     switch (error.code)
     {
     case 'EACCES':
-        alert(`${bind} requires elevated privileges`);
+        logger.warn(`${bind} requires elevated privileges`);
         process.exit(1);
         break;
 
     case 'EADDRINUSE':
-        alert(`${bind} is already in use`);
+        logger.warn(`${bind} is already in use`);
         process.exit(1);
         break;
 
     default:
-        throw error;
+        logger.error(error);
+        break;
     }
 };
 
@@ -79,7 +80,7 @@ const onListening = () =>
 {
     const addr = server.address();
     const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
-    debug(`Listening on ${bind}`);
+    logger.debug(`Listening on ${bind}`);
 };
 
 /**

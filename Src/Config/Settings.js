@@ -1,6 +1,4 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
+require('dotenv').config();
 
 // Application Related
 export const AppPort = process.env.PORT;
@@ -14,7 +12,7 @@ export const DBHost = process.env.DB_HOST;
 export const DBPort = process.env.DB_PORT;
 export const DBUser = process.env.DB_USER;
 export const DBPass = process.env.DB_PASS;
-export const { DB } = process.env.DB;
+export const DBName = process.env.DB_NAME;
 export const DBPoolMax = process.env.DB_POOL_MAX;
 export const DBPoolMin = process.env.DB_POOL_MIN;
 export const DBPoolAquire = process.env.DB_POOL_ACQUIRE;
