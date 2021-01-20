@@ -1,5 +1,6 @@
-const event = require('./event');
+export { default as ticket } from './ticket'; 
+export { default as event } from './event';
+export { default as users } from './users';
 
-module.exports = {
-    event,
-};
+// Auth
+export { RegisterValidation as register, LoginValidation as login } from './validation';

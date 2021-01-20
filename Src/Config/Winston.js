@@ -2,50 +2,40 @@ import { createLogger, format, transports } from 'winston';
 import { existsSync, mkdirSync } from 'fs';
 import 'winston-daily-rotate-file';
 
-let logDir = '';
+import { LoggingDir, EnvMode } from './Settings';
 
-switch (process.env.NODE_ENV)
-{
-case 'development':
-    logDir = 'Src/Logs';
-    break;
-
-case 'production':
-    logDir = `${__dirname}/Logs`;
-    break;
-default:
-    break;
-}
+const env = EnvMode || 'development';
+const LoggingLevel = env === 'production' ? 'info' : 'debug';
 
 // Create the log directory if it does not exist
-if (!existsSync(logDir))
+if (!existsSync(LoggingDir))
 {
-    mkdirSync(logDir);
+    mkdirSync(LoggingDir);
 }
 
 // eslint-disable-next-line new-cap
 const logger = createLogger({
     format: format.combine(
         format.timestamp({
-            format: 'DD-MM-YYYY HH:mm:ss',
+            format: 'ddd, D MMM YYYY h:m:s A',
         }),
     ),
     transports: [
         new transports.Console({
-            level: 'debug',
+            level: LoggingLevel,
             format: format.combine(
                 format.colorize(),
-                format.printf((log) => `${log.timestamp} [${log.level}]: ${log.message}`),
+                format.printf((log) => `[${log.timestamp}][${log.level}]: ${log.message}`),
             ),
         }),
         new transports.DailyRotateFile({
-            level: 'info',
+            level: LoggingLevel,
             frequency: '6h',
-            datePattern: 'DD-MM-YYYY',
+            datePattern: 'D-M-YYYY', // 11-1-2021 1:50 PM
             filename: '%DATE%.log',
-            dirname: logDir,
+            dirname: LoggingDir,
             format: format.combine(
-                format.printf((log) => `${log.timestamp} [${log.level}]: ${log.message}`),
+                format.printf((log) => `[${log.timestamp}][${log.level}]: ${log.message}`),
             ),
             handleExceptions: true,
             maxsize: 5242880, // 5 MB
@@ -56,5 +46,4 @@ const logger = createLogger({
     exitOnError: false,
 });
 
-logger.info(`${process.env.NODE_ENV} ${logDir}`);
 export default logger;

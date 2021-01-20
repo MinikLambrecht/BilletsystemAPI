@@ -1,37 +1,31 @@
 import logger from '../Config/Winston';
+import pool from '../Config/Database';
+import { EventModel } from '../Models';
 
-const db = require('../Config/Database').default;
-
-export function create(req, res)
+function create(req, res)
 {
-    const query = `
-    INSERT INTO Events (event,
-                        description,
-                        location,
-                        start,
-                        end,
-                        available_seats,
-                        reserved_seats,
-                        total_seats)
-    VALUES ('${req.body.event}', 
-            '${req.body.description}', 
-            '${req.body.location}', 
-            '${req.body.start}', 
-            '${req.body.end}', 
-            ${req.body.available_seats}, 
-            ${req.body.reserved_seats}, 
-            ${req.body.total_seats})`;
+    const event = new EventModel({
+        id: req.body.id,
+        Event: req.body.Event,
+        Description: req.body.Description,
+        Location: req.body.Location,
+        Start_Date: req.body.Start_Date,
+        End_Date: req.body.End_Date,
+        Total_Seats: req.body.Total_Seats,
+    });
 
-    db.query(query, (err, data) =>
+    const query = `CALL New_Event('${event.Event}', '${event.Description}', '${event.Location}', '${event.Start_Date}', '${event.End_Date}', ${event.Total_Seats})`;
+
+    pool.query(query, (err, data) =>
     {
         if (!err && data.insertId != null)
         {
             res.json({
                 Error: false,
-                Message: `Event '${req.body.event}' successfully created with id. ${data.insertId}!`,
+                Message: `Event '${event.Event}' successfully created!`,
             });
             logger.info(
-                `Creating event '${req.body.event}' - ${req.body.event} has been issued id nr. ${data.insertId}`,
+                `Creating event '${event.Event}'`,
             );
         }
         else
@@ -40,20 +34,20 @@ export function create(req, res)
                 Error: true,
                 Message: 'An error occured while creating a event!',
             });
-            logger.error(err);
+            logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
         }
     });
 }
 
-export function getall(req, res)
+function getall(req, res)
 {
-    const query = 'SELECT * FROM Events';
+    const query = 'CALL Get_All_Events()';
 
-    db.query(query, (err, rows) =>
+    pool.query(query, (err, rows) =>
     {
-        if (!err && rows.length > 0)
+        if (!err && rows[0].length > 0)
         {
-            res.json(rows);
+            res.json(rows[0]);
             logger.info('Accessing all rows');
         }
         else
@@ -67,93 +61,143 @@ export function getall(req, res)
     });
 }
 
-export function get(req, res)
+function getSeatInfo(req, res)
 {
-    const query = `SELECT * FROM Events WHERE id=${req.body.id}`;
 
-    db.query(query, (err, rows) =>
+    const event = new EventModel({
+        id: req.params.id,
+    });
+    
+    const query = `CALL Get_Event_SeatInfo(${event.id})`;
+
+    pool.query(query, (err, rows) =>
     {
-        if (!err && rows.length > 0)
+        if (!err && rows[0].length > 0)
         {
-            res.json(rows);
-            logger.info(`Accessing row ${req.body.id}`);
+            res.json(rows[0][0]);
+            logger.info(`Accessing row ${event.id}`);
+        }
+        else
+        {
+            res.json({
+                Message: `No event has been found with id. ${event.id}!`,
+            });
+            logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
+        }
+    });
+}
+
+function get(req, res)
+{
+    const event = new EventModel({
+        id: req.params.id,
+        Event: req.params.Event,
+        Description: req.params.Description,
+        Location: req.params.Location,
+        Start_Date: req.params.Start_Date,
+        End_Date: req.params.End_Date,
+        Total_Seats: req.params.Total_Seats,
+    });
+    
+    const query = `CALL billetsystem.Get_Event_By_ID(${event.id})`;
+
+    pool.query(query, (err, rows) =>
+    {
+        if (!err && rows[0].length > 0)
+        {
+            res.json(rows[0][0]);
+            logger.info(`Accessing row ${event.id}`);
         }
         else
         {
             res.json({
                 Error: true,
-                Message: `No event has been found with id. ${req.body.id}!`,
+                Message: `No event has been found with id. ${event.id}!`,
             });
-            logger.error(err);
+            logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
         }
     });
 }
 
-export function remove(req, res)
+function remove(req, res)
 {
-    const query = `DELETE FROM Events WHERE id=${req.body.id}`;
+    const event = new EventModel({
+        id: req.body.id,
+        Event: req.body.Event,
+        Description: req.body.Description,
+        Location: req.body.Location,
+        Start_Date: req.body.Start_Date,
+        End_Date: req.body.End_Date,
+        Total_Seats: req.body.Total_Seats,
+    });
 
-    db.query(query, (err, data) =>
+    const query = `CALL billetsystem.Delete_Event_By_ID(?)`;
+
+    pool.query(query, event.id, (err, data) =>
     {
         if (!err && data.affectedRows > 0)
         {
             res.json({
-                Error: false,
                 Message: 'Event has been deleted!',
             });
-            logger.info(`Deleting row ${req.body.id}`);
+            logger.info(`Deleting row ${event.id}`);
         }
         else
         {
             res.json({
-                Error: true,
-                Message: 'An error occured while deleing a event!',
+                Message: `No event with id. ${event.id} was found!`,
             });
-            logger.error(err);
+            logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
         }
     });
 }
 
-export function update(req, res)
+function update(req, res)
 {
-    const query = `
-    UPDATE Events 
-    SET
-        event = '${req.body.event}',
-        description = '${req.body.description}',
-        location = '${req.body.location}',
-        start = '${req.body.start}',
-        end = '${req.body.end}',
-        available_seats = ${req.body.available_seats},
-        reserved_seats = ${req.body.reserved_seats},
-        total_seats = ${req.body.total_seats}
-    WHERE
-        id = ${req.body.id}`;
+    const event = new EventModel({
+        id: req.body.id,
+        Event: req.body.Event,
+        Description: req.body.Description,
+        Location: req.body.Location,
+        Start_Date: req.body.Start_Date,
+        End_Date: req.body.End_Date,
+        Total_Seats: req.body.Total_Seats,
+    });
 
-    db.query(query, (err, data) =>
+    const query = `CALL billetsystem.Update_Event(${event.id}, '${event.Event}', '${event.Description}', '${event.Location}', '${event.Start_Date}', '${event.End_Date}', ${event.Total_Seats})`;
+    logger.debug(query);
+    pool.query(query, (err, data) =>
     {
         if (!err && data.affectedRows > 0)
         {
             res.json({
-                Error: false,
                 Message: 'Event has been updated!',
             });
-            logger.info(`Updating row ${req.body.id} [${data.info}]`);
+            logger.info(`Updating row ${event.id} [${data.info}]`);
         }
         else
         {
-            res.json({
-                Error: true,
-                Message: `An error occured while updating event nr. ${req.body.id}!`,
-            });
             if (err == null)
             {
-                logger.error(`There is no event with id. ${req.body.id}!`);
+                res.json({
+                    Message: `There is no event with id. ${event.id}!`,
+                });
+
+                logger.error(`There is no event with id. ${event.id}!`);
             }
             else
             {
-                logger.error(err);
+                logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
             }
         }
     });
 }
+
+export default {
+    create,
+    getall,
+    get,
+    getSeatInfo,
+    remove,
+    update,
+};
