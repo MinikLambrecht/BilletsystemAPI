@@ -155,7 +155,7 @@ function remove(req, res)
 function update(req, res)
 {
     const event = new EventModel({
-        id: req.body.id,
+        id: req.params.id,
         Event: req.body.Event,
         Description: req.body.Description,
         Location: req.body.Location,
@@ -164,8 +164,9 @@ function update(req, res)
         Total_Seats: req.body.Total_Seats,
     });
 
+    logger.debug(`ID: ${event.id}, \n Event: ${event.Event}, \n Desc: ${event.Description}, \n Location: ${event.Location}, \n Start Date: ${event.Start_Date}, \n End Date: ${event.End_Date}, \n Seats: ${event.Total_Seats}`)
+
     const query = `CALL billetsystem.Update_Event(${event.id}, '${event.Event}', '${event.Description}', '${event.Location}', '${event.Start_Date}', '${event.End_Date}', ${event.Total_Seats})`;
-    logger.debug(query);
     pool.query(query, (err, data) =>
     {
         if (!err && data.affectedRows > 0)

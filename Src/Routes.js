@@ -13,15 +13,16 @@ const router = Router();
 // Events
 router
     .route('/event')
-    .put(eventController.update)
     .delete(eventController.remove);
 router.get('/events', eventController.getall);
 router.post('/event/new', eventController.create);
 router.get('/event/:id/seats', eventController.getSeatInfo);
 router.get('/event/:id', eventController.get);
+router.put('/event/:id', eventController.update);
 
 // Authentication
 router.post('/user/register', userController.CreateUser);
+router.post('/admin/login', userController.AdminLogin);
 router.post('/user/login', userController.Login);
 router.get('/user/logout', userController.Logout);
 
@@ -32,5 +33,6 @@ router.get('/user/:id/tickets', userController.getUserTickets);
 // Tickets
 router.get('/ticket/:id', ticketController.checkValidity);
 router.put('/ticket/:id/use', ticketController.useTicket);
+router.post('/ticket/create', ticketController.createTicket);
 
 export default router;

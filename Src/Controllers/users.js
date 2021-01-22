@@ -124,12 +124,11 @@ function Login(req, res)
 
             // Populate the user model
             const user = new UserModel({
+                id: results[0][0].id,
                 name: results[0][0].name,
                 email: results[0][0].email,
                 password: results[0][0].password,
             });
-
-            logger.debug(user.email);
 
             // Compare the passswords
             bcrypt.compare(password, user.password).then((isMatch) =>
@@ -166,8 +165,9 @@ function Login(req, res)
                         req.session.user = user;
 
                         res.json({
+                            id: user.id,
                             success: true,
-                            token: `${token}`,
+                            token: `${token}`
                         });
                     });
                 }
@@ -180,7 +180,112 @@ function Login(req, res)
             });
         }
 
-        logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
+        logger.error(`${error.code} ${error.errno} (${error.sqlState}): ${error.stack}`);
+    });
+}
+
+function AdminLogin(req, res)
+{
+    // Form validation
+    const { errors, isValid } = LoginValidation(req.body);
+
+    // Check validity
+    if (!isValid)
+    {
+        return res.status(400).json(errors);
+    }
+
+    const { email } = req.body;
+    const { password } = req.body;
+
+    const q = `CALL Get_User_By_Email(?)`;
+
+    // Find the user by Email
+    // eslint-disable-next-line consistent-return
+    pool.query(q, email, (error, results) =>
+    {
+        if (!error)
+        {
+            logger.debug(results[0].length);
+            // Return 404 if no user was found
+            if (results[0].length <= 0)
+            {
+                return res.status(404).json({
+                    message: 'Email not found',
+                });
+            }
+
+            // Populate the user model
+            const user = new UserModel({
+                id: results[0][0].id,
+                name: results[0][0].name,
+                email: results[0][0].email,
+                password: results[0][0].password,
+                role_id: results[0][0].role,
+            });
+
+            // Compare the passswords
+            bcrypt.compare(password, user.password).then((isMatch) =>
+            {
+                if (isMatch)
+                {
+                    if (user.role_id == 'Admin')
+                    {
+                        const payload = {
+                            id: user.id,
+                            name: user.name,
+                        };
+
+                        // If a seesion has already been created for this user
+                        // reject login.
+                        if(req.session.user)
+                        {
+                            logger.debug(`Admin ${user.name} is already logged in`);
+
+                            return res.status(400).json({
+                                alreadyloggedin: `Admin ${user.name} is already logged in`
+                            });
+                        }
+
+                        // Sign token
+                        // eslint-disable-next-line object-curly-newline
+                        jwt.sign(payload, JWTSecret, { expiresIn: 31556926 }, (jwterr, token) =>
+                        {
+                            if (jwterr)
+                            {
+                                logger.error(jwterr);
+                            }
+
+                            logger.info(`Admin '${user.name}' has logged in`);
+
+                            req.session.user = user;
+
+                            res.json({
+                                id: user.id,
+                                success: true,
+                                token: `${token}`,
+                            });
+                        });
+                    }
+                    else
+                    {
+                        logger.info(`${user.email} is not an admin!`);
+
+                        res.status(400).json({
+                            message: `${user.email} is not an admin!`
+                        })
+                    }
+                }
+                else
+                {
+                    return res.status(400).json({
+                        passwordincorrect: 'Incorrect password',
+                    });
+                }
+            });
+        }
+
+        logger.error(`${error.code} ${error.errno} (${error.sqlState}): ${error.stack}`);
     });
 }
 
@@ -233,7 +338,7 @@ function getUser (req, res)
         {
             res.json({
                 Error: true,
-                Message: `No event has been found with id. ${user.id}!`,
+                Message: `No User has been found with id. ${user.id}!`,
             });
             logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
         }
@@ -267,6 +372,7 @@ function getUserTickets (req, res)
 
 export default {
     CreateUser,
+    AdminLogin,
     Login,
     Logout,
     getUser,

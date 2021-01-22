@@ -12,6 +12,7 @@ dotenv.config();
 
 // Initialize pool
 const pool = mysql.createPool({
+    multipleStatements: true,
     connectionLimit: 100,
     supportBigNumbers: true,
     bigNumberStrings: true,

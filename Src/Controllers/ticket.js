@@ -1,6 +1,6 @@
 import logger from '../Config/Winston';
 import pool from '../Config/Database';
-import { TicketModel } from '../Models';
+import { EventModel, TicketModel, UserModel } from '../Models';
 
 function checkValidity(req, res)
 {
@@ -27,6 +27,38 @@ function checkValidity(req, res)
     });
 }
 
+function createTicket (req, res)
+{
+    const event = new EventModel({
+        id: req.body.event_id
+    });
+
+    const user = new UserModel({
+        id: req.body.user_id
+    });
+
+    const query = `CALL billetsystem.Add_Reservation(${event.id}, ${user.id}, @ticketID); SELECT @ticketID as 'TicketID'`;
+
+    pool.query(query, (err, data) =>
+    {
+        if (err)
+        {
+            res.json({
+                Message: 'An error occured while creating a ticket!',
+            });
+            logger.error(`${err.code} ${err.errno} (${err.sqlState}): ${err.stack}`);
+        }
+
+        res.json({
+            id: data[1][0].TicketID,
+            message: 'Ticket successfully created!',
+        });
+        logger.info(
+            `Creating ticket`,
+        );
+    });
+}
+
 function useTicket(req, res)
 {
     const ticket = new TicketModel({
@@ -37,9 +69,8 @@ function useTicket(req, res)
 
     pool.query(query, (err, rows) =>
     {
-        if (!err && rows[0].length > 0)
+        if (!err)
         {
-            res.json(rows[0][0]);
             logger.info(`Updating row ${ticket.id}`);
             res.json({
                 Message: `Ticket ${ticket.id} has been redeemed!`,
@@ -57,5 +88,6 @@ function useTicket(req, res)
 
 export default {
     checkValidity,
+    createTicket,
     useTicket
 };
